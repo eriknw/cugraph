@@ -1514,6 +1514,57 @@ def test_renumber_edges_by_type(dataset1_PropertyGraph):
     assert empty_pG.renumber_edges_by_type() is None
 
 
+@pytest.mark.parametrize("df_type", df_types, ids=df_type_id)
+def test_add_data_noncontiguous(df_type):
+    from cugraph.experimental import PropertyGraph
+
+    df = df_type({
+        'src': [0, 0, 1, 2, 2, 3, 3, 1, 2, 4],
+        'dst': [1, 2, 4, 3, 3, 1, 2, 4, 4, 3],
+        'edge_type':
+            ['pig', 'dog', 'cat', 'pig', 'cat',
+             'pig', 'dog', 'pig', 'cat', 'dog']
+    })
+    counts = df["edge_type"].value_counts()
+
+    pG = PropertyGraph()
+    for edge_type in ["cat", "dog", "pig"]:
+        pG.add_edge_data(
+            df[df.edge_type == edge_type],
+            vertex_col_names=['src', 'dst'],
+            type_name=edge_type
+        )
+    if df_type is cudf.DataFrame:
+        ase = assert_series_equal
+    else:
+        ase = pd.testing.assert_series_equal
+    for edge_type in ["cat", "dog", "pig"]:
+        cur_df = pG.get_edge_data(types=edge_type)
+        assert len(cur_df) == counts[edge_type]
+        ase(
+            cur_df[pG.type_col_name].astype(str),
+            cur_df["edge_type"],
+            check_names=False,
+        )
+
+    df['vertex'] = 10 * df['src'] + df['dst']
+    pG = PropertyGraph()
+    for edge_type in ["cat", "dog", "pig"]:
+        pG.add_vertex_data(
+            df[df.edge_type == edge_type],
+            vertex_col_name='vertex',
+            type_name=edge_type
+        )
+    for edge_type in ["cat", "dog", "pig"]:
+        cur_df = pG.get_vertex_data(types=edge_type)
+        assert len(cur_df) == counts[edge_type]
+        ase(
+            cur_df[pG.type_col_name].astype(str),
+            cur_df["edge_type"],
+            check_names=False,
+        )
+
+
 # =============================================================================
 # Benchmarks
 # =============================================================================

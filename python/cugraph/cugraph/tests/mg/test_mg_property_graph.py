@@ -17,7 +17,7 @@ import dask_cudf
 import pytest
 import pandas as pd
 import cudf
-from cudf.testing import assert_frame_equal
+from cudf.testing import assert_frame_equal, assert_series_equal
 
 import cugraph.dask as dcg
 from cugraph.testing.utils import RAPIDS_DATASET_ROOT_DIR_PATH
@@ -722,3 +722,50 @@ def test_renumber_edges_by_type(dataset1_MGPropertyGraph):
 
     empty_pG = MGPropertyGraph()
     assert empty_pG.renumber_edges_by_type() is None
+
+
+def test_add_data_noncontiguous():
+    from cugraph.experimental import MGPropertyGraph
+
+    df = cudf.DataFrame({
+        'src': [0, 0, 1, 2, 2, 3, 3, 1, 2, 4],
+        'dst': [1, 2, 4, 3, 3, 1, 2, 4, 4, 3],
+        'edge_type':
+            ['pig', 'dog', 'cat', 'pig', 'cat',
+             'pig', 'dog', 'pig', 'cat', 'dog']
+    })
+    counts = df["edge_type"].value_counts()
+    df = dask_cudf.from_cudf(df, npartitions=2)
+
+    pG = MGPropertyGraph()
+    for edge_type in ["cat", "dog", "pig"]:
+        pG.add_edge_data(
+            df[df.edge_type == edge_type],
+            vertex_col_names=['src', 'dst'],
+            type_name=edge_type
+        )
+    for edge_type in ["cat", "dog", "pig"]:
+        cur_df = pG.get_edge_data(types=edge_type).compute()
+        assert len(cur_df) == counts[edge_type]
+        assert_series_equal(
+            cur_df[pG.type_col_name].astype(str),
+            cur_df["edge_type"],
+            check_names=False,
+        )
+
+    df['vertex'] = 10 * df['src'] + df['dst']
+    pG = MGPropertyGraph()
+    for edge_type in ["cat", "dog", "pig"]:
+        pG.add_vertex_data(
+            df[df.edge_type == edge_type],
+            vertex_col_name='vertex',
+            type_name=edge_type
+        )
+    for edge_type in ["cat", "dog", "pig"]:
+        cur_df = pG.get_vertex_data(types=edge_type).compute()
+        assert len(cur_df) == counts[edge_type]
+        assert_series_equal(
+            cur_df[pG.type_col_name].astype(str),
+            cur_df["edge_type"],
+            check_names=False,
+        )
