@@ -1141,12 +1141,7 @@ class EXPERIMENTAL__MGPropertyGraph:
             )
             for s in vert_sers
         ):
-            # Cast all to int64
-            first, *rest = vert_sers
-            dtype = first.index.dtype
-            for s in rest:
-                if s.index.dtype != dtype:
-                    s.index = s.index.astype(dtype)
+            vert_sers = [s.reset_index(drop=True) for s in vert_sers]
         return vert_sers
 
     @staticmethod
