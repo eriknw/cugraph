@@ -991,7 +991,7 @@ class EXPERIMENTAL__MGPropertyGraph:
         df = self.__vertex_prop_dataframe
         if self.__edge_prop_dataframe is not None:
 
-            # FIXME: ISSUE WITH DASK_CUDF
+            # FIXME DASK_CUDF: https://github.com/rapidsai/cudf/issues/11795
             cat_dtype = df.dtypes[self.type_col_name]
             df[self.type_col_name] = df[self.type_col_name].astype(str)
 
@@ -1000,7 +1000,7 @@ class EXPERIMENTAL__MGPropertyGraph:
                 .sort_values(by=self.type_col_name)
             )
 
-            # FIXME: ISSUE WITH DASK_CUDF
+            # FIXME DASK_CUDF: https://github.com/rapidsai/cudf/issues/11795
             df[self.type_col_name] = df[self.type_col_name].astype(cat_dtype)
 
             new_name = f"new_{self.vertex_col_name}"
@@ -1031,7 +1031,7 @@ class EXPERIMENTAL__MGPropertyGraph:
             df.set_index(self.vertex_col_name, sorted=True).persist()
         )
 
-        # FIXME: ISSUE WITH DASK_CUDF
+        # FIXME DASK_CUDF: https://github.com/rapidsai/cudf/issues/11795
         df = self._vertex_type_value_counts
         cat_dtype = df.index.dtype
         df.index = df.index.astype(str)
@@ -1044,7 +1044,7 @@ class EXPERIMENTAL__MGPropertyGraph:
             .to_frame("stop")
         )
 
-        # FIXME: ISSUE WITH DASK_CUDF
+        # FIXME DASK_CUDF: https://github.com/rapidsai/cudf/issues/11795
         df.index = df.index.astype(cat_dtype)
 
         rv["start"] = rv["stop"].shift(1, fill_value=0)
@@ -1062,13 +1062,13 @@ class EXPERIMENTAL__MGPropertyGraph:
             return None
         df = self.__edge_prop_dataframe
 
-        # FIXME: ISSUE WITH DASK_CUDF
+        # FIXME DASK_CUDF: https://github.com/rapidsai/cudf/issues/11795
         cat_dtype = df.dtypes[self.type_col_name]
         df[self.type_col_name] = df[self.type_col_name].astype(str)
 
         df = df.sort_values(by=self.type_col_name, ignore_index=True)
 
-        # FIXME: ISSUE WITH DASK_CUDF
+        # FIXME DASK_CUDF: https://github.com/rapidsai/cudf/issues/11795
         df[self.type_col_name] = df[self.type_col_name].astype(cat_dtype)
 
         df[self.edge_id_col_name] = 1
@@ -1077,7 +1077,7 @@ class EXPERIMENTAL__MGPropertyGraph:
             df.set_index(self.edge_id_col_name, sorted=True).persist()
         )
 
-        # FIXME: ISSUE WITH DASK_CUDF
+        # FIXME DASK_CUDF: https://github.com/rapidsai/cudf/issues/11795
         df = self._edge_type_value_counts
         assert df.index.dtype == cat_dtype
         df.index = df.index.astype(str)
@@ -1090,7 +1090,7 @@ class EXPERIMENTAL__MGPropertyGraph:
             .to_frame("stop")
         )
 
-        # FIXME: ISSUE WITH DASK_CUDF
+        # FIXME DASK_CUDF: https://github.com/rapidsai/cudf/issues/11795
         df.index = df.index.astype(cat_dtype)
 
         rv["start"] = rv["stop"].shift(1, fill_value=0)
