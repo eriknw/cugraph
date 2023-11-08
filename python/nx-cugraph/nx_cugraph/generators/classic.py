@@ -312,7 +312,7 @@ def star_graph(n, create_using=None):
     # star_graph behaves differently whether the input was an int or iterable
     if isinstance(orig_n, Integral):
         if nodes is not None:
-            nodes.append(n)
+            nodes = [*nodes, n]  # Don't mutate input
         n += 1
     if n < 3:
         return _common_small_graph(n, nodes, create_using, allow_directed=False)
